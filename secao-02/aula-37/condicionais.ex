@@ -11,4 +11,4 @@ end
 # para selecionar qual a função privada deve ser executada, pois ambos
 # tem o mesmo nome. Após o matching, a função é executada.
 
-# Não utilizando condicionais como if em Javascript
+# Não utilizando condicionais como if em Javascript ou C

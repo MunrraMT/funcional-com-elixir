@@ -3,9 +3,7 @@ defmodule MyModule.RecursionFatorialTcOptimization do
     factorial_of(n, 1)
   end
 
-  defp factorial_of(0, acc) do
-    acc
-  end
+  defp factorial_of(0, acc), do: acc
 
   defp factorial_of(n, acc) when n > 0 and is_integer(n) do
     factorial_of(n - 1, n * acc)

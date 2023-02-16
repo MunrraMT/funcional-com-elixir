@@ -4,16 +4,48 @@ defmodule FriendsApp.Cli.MenuChoice do
 
   def start do
     Shell.cmd("clear")
-    Shell.info("Escolha uma opção:")
+    Shell.info("Escolha uma opção:\n")
 
-    MenuItems.all()
+    find_menu_item_by_index = &Enum.at(&2, &1)
+
+    menu_itens = MenuItems.all()
+
+    menu_itens
     |> Enum.map(& &1.label)
-    |> display_options
+    |> display_options()
+    |> generate_question()
+    |> Shell.prompt()
+    |> parse_answer()
+    |> find_menu_item_by_index.(menu_itens)
+    |> confirm_menu_item()
   end
 
   defp display_options(options) do
     options
     |> Enum.with_index(1)
     |> Enum.each(fn {option, index} -> Shell.info("#{index} - #{option}") end)
+
+    options
+  end
+
+  defp generate_question(options) do
+    options = Enum.join(1..Enum.count(options), ",")
+    "\nQual das opções acima vc escolhe? [#{options}]\n"
+  end
+
+  defp parse_answer(answer) do
+    {option, _} = Integer.parse(answer)
+    option - 1
+  end
+
+  defp confirm_menu_item(chosen_menu_item) do
+    Shell.cmd("clear")
+    Shell.info("Você escolheu... [#{chosen_menu_item.label}]")
+
+    if(Shell.yes?("Confirma?")) do
+      Shell.info("...#{chosen_menu_item.label} ...")
+    else
+      start()
+    end
   end
 end

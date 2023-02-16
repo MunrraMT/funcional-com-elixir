@@ -1,4 +1,4 @@
-defmodule FriendsApp.Cli.MenuItems do
+defmodule FriendsApp.Cli.Menu.Items do
   alias FriendsApp.Cli.Menu
 
   def all,

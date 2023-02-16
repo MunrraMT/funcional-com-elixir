@@ -6,8 +6,6 @@ defmodule FriendsApp.Cli.MenuChoice do
     Shell.cmd("clear")
     Shell.info("Escolha uma opção:\n")
 
-    find_menu_item_by_index = &Enum.at(&2, &1)
-
     menu_itens = MenuItems.all()
 
     menu_itens
@@ -16,7 +14,7 @@ defmodule FriendsApp.Cli.MenuChoice do
     |> generate_question()
     |> Shell.prompt()
     |> parse_answer()
-    |> find_menu_item_by_index.(menu_itens)
+    |> find_menu_item_by_index(menu_itens)
     |> confirm_menu_item()
   end
 
@@ -33,12 +31,28 @@ defmodule FriendsApp.Cli.MenuChoice do
     "\nQual das opções acima vc escolhe? [#{options}]\n"
   end
 
-  defp parse_answer(answer) do
-    {option, _} = Integer.parse(answer)
-    option - 1
+  defp error_message do
+    Shell.cmd("clear")
+    Shell.info("Valor não válido")
+    Shell.prompt("Aperte enter para escolher novamente\n")
+    start()
   end
 
-  defp confirm_menu_item(chosen_menu_item) do
+  defp parse_answer(answer) do
+    case Integer.parse(answer) do
+      :error -> error_message()
+      {option, _} -> option - 1
+    end
+  end
+
+  defp find_menu_item_by_index(chosen_menu_item, options) do
+    case chosen_menu_item do
+      -1 -> error_message()
+      _ -> Enum.at(options, chosen_menu_item, :error)
+    end
+  end
+
+  defp confirm_message(chosen_menu_item) do
     Shell.cmd("clear")
     Shell.info("Você escolheu... [#{chosen_menu_item.label}]")
 
@@ -46,6 +60,13 @@ defmodule FriendsApp.Cli.MenuChoice do
       Shell.info("...#{chosen_menu_item.label} ...")
     else
       start()
+    end
+  end
+
+  defp confirm_menu_item(chosen_menu_item) do
+    case chosen_menu_item do
+      :error -> error_message()
+      _ -> confirm_message(chosen_menu_item)
     end
   end
 end

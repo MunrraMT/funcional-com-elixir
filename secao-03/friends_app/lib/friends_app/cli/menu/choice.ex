@@ -1,6 +1,7 @@
 defmodule FriendsApp.Cli.Menu.Choice do
   alias Mix.Shell.IO, as: Shell
   alias FriendsApp.Cli.Menu.Items
+  alias FriendsApp.Db.Csv
 
   def start do
     Shell.cmd("clear")
@@ -17,6 +18,7 @@ defmodule FriendsApp.Cli.Menu.Choice do
     |> find_menu_item_by_index(menu_itens)
     |> confirm_menu_item()
     |> confirm_message()
+    |> Csv.perform()
   end
 
   defp display_options(options) do

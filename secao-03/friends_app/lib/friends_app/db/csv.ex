@@ -12,10 +12,13 @@ defmodule FriendsApp.Db.Csv do
       %Menu{label: _, id: :update} -> Shell.info(">>> update")
       %Menu{label: _, id: :delete} -> Shell.info(">>> delete")
     end
+
+    Choice.start()
   end
 
   defp create do
     collect_data()
+    |> Map.from_struct()
     |> Map.values()
     |> wrap_in_list()
     |> NimbleCSV.dump_to_iodata()
@@ -26,7 +29,7 @@ defmodule FriendsApp.Db.Csv do
     File.read!("#{File.cwd!()}/friends.csv")
     |> NimbleCSV.parse_string(skip_headers: false)
     |> Enum.map(fn [email, name, phone] ->
-      %{name: name, email: email, phone: phone}
+      %Friends{name: name, email: email, phone: phone}
     end)
     |> Scribe.console(
       data: [
@@ -40,11 +43,12 @@ defmodule FriendsApp.Db.Csv do
   defp collect_data do
     Shell.cmd("clear")
 
-    %{
+    %Friends{
       name: prompt_message("Digite o nome:"),
       email: prompt_message("Digite o email:"),
       phone: prompt_message("Digite o phone:")
     }
+    |> Map.from_struct()
   end
 
   defp prompt_message(message) do

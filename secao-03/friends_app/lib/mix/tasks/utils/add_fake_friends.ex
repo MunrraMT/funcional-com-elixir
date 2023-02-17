@@ -22,11 +22,19 @@ defmodule Mix.Tasks.Utils.AddFakeFriends do
   end
 
   defp random_list_friend do
-    [
-      Faker.Person.PtBr.name(),
-      Faker.Internet.PtBr.free_email_service(),
-      Faker.Phone.PtBr.number_with_region("(xx) 9 1542-6461")
-    ]
+    firstName = Faker.Person.PtBr.first_name()
+    lastName = Faker.Person.PtBr.last_name()
+    emailDomain = Faker.Internet.PtBr.free_email_service()
+
+    nameComplete = "#{firstName} #{lastName}"
+    emailComplete = "#{firstName}.#{lastName}@#{emailDomain}" |> String.downcase()
+
+    %{
+      name: nameComplete,
+      email: emailComplete,
+      phone: Faker.Phone.PtBr.number_with_region("(xx) 9 1542-6461")
+    }
+    |> Map.values()
   end
 
   defp save_csv_file(data) do

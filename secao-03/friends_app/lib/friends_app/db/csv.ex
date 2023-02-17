@@ -26,7 +26,8 @@ defmodule FriendsApp.Db.Csv do
   end
 
   defp read do
-    File.read!("#{File.cwd!()}/friends.csv")
+    Application.fetch_env!(:friends_app, :csv_file_path)
+    |> File.read!()
     |> NimbleCSV.parse_string(skip_headers: false)
     |> Enum.map(fn [email, name, phone] ->
       %Friends{name: name, email: email, phone: phone}
@@ -48,7 +49,6 @@ defmodule FriendsApp.Db.Csv do
       email: prompt_message("Digite o email:"),
       phone: prompt_message("Digite o phone:")
     }
-    |> Map.from_struct()
   end
 
   defp prompt_message(message) do
@@ -62,6 +62,7 @@ defmodule FriendsApp.Db.Csv do
   end
 
   defp save_csv_file(data) do
-    File.write!("#{File.cwd!()}/friends.csv", data, [:append])
+    Application.fetch_env!(:friends_app, :csv_file_path)
+    |> File.write!(data, [:append])
   end
 end

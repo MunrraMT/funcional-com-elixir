@@ -8,18 +8,33 @@ defmodule FriendsApp.Db.Csv do
   def perform(chosen_menu_item) do
     case chosen_menu_item do
       %Menu{label: _, id: :create} -> create()
-      %Menu{label: _, id: :read} -> Shell.info(">>> read")
+      %Menu{label: _, id: :read} -> read()
       %Menu{label: _, id: :update} -> Shell.info(">>> update")
       %Menu{label: _, id: :delete} -> Shell.info(">>> delete")
     end
   end
 
   defp create do
-    collect_data
+    collect_data()
     |> Map.values()
     |> wrap_in_list()
     |> NimbleCSV.dump_to_iodata()
     |> save_csv_file
+  end
+
+  defp read do
+    File.read!("#{File.cwd!()}/friends.csv")
+    |> NimbleCSV.parse_string(skip_headers: false)
+    |> Enum.map(fn [email, name, phone] ->
+      %{name: name, email: email, phone: phone}
+    end)
+    |> Scribe.console(
+      data: [
+        {"Nome", :name},
+        {"Email", :email},
+        {"Telefone", :phone}
+      ]
+    )
   end
 
   defp collect_data do

@@ -9,7 +9,7 @@ defmodule FriendsApp.Db.Csv do
     case chosen_menu_item do
       %Menu{label: _, id: :create} -> create()
       %Menu{label: _, id: :read} -> read()
-      %Menu{label: _, id: :update} -> Shell.info(">>> update")
+      %Menu{label: _, id: :update} -> update()
       %Menu{label: _, id: :delete} -> delete()
     end
 
@@ -39,6 +39,16 @@ defmodule FriendsApp.Db.Csv do
     |> check_friend_found()
     |> confirm_delete()
     |> delete_and_save()
+  end
+
+  defp update do
+    clear_terminal()
+
+    prompt_message("Digite o email do amigo que deseja atualizar:")
+    |> search_friend_by_email()
+    |> check_friend_found()
+    |> confirm_update()
+    |> do_update()
   end
 
   defp collect_data do
@@ -130,7 +140,9 @@ defmodule FriendsApp.Db.Csv do
   defp confirm_delete(friend) do
     clear_terminal()
     Shell.info("Encontramos...")
-    show_friend(friend)
+
+    friend
+    |> show_friend()
 
     case Shell.yes?("Deseja realmente apagar esse amigo da sua lista?") do
       true -> friend
@@ -177,5 +189,49 @@ defmodule FriendsApp.Db.Csv do
   defp friend_list_to_csv(friends_list) do
     friends_list
     |> Enum.map(fn item -> [item.email, item.name, item.phone] end)
+  end
+
+  defp confirm_update(friend) do
+    clear_terminal()
+    Shell.info("Encontramos...")
+
+    friend
+    |> show_friend()
+
+    case Shell.yes?("Deseja realmente atualizar o email do seu amigo?") do
+      true -> friend
+      false -> :error
+    end
+  end
+
+  defp do_update(friend) do
+    case friend do
+      :error ->
+        Shell.info("Ok, o amigo NÃO será atualizado...")
+        prompt_message("Pressione ENTER para continuar")
+
+      _ ->
+        clear_terminal()
+        Shell.info("Agora você irá digitar os novos dados do seu amigo...")
+
+        update_friends = collect_data()
+
+        read_csv_file()
+        |> parse_csv_parse_to_list()
+        |> csv_list_to_friends_struct_list()
+        |> delete_friend_from_struct_list(friend)
+        |> friend_list_to_csv()
+        |> prepare_list_to_save_csv()
+        |> save_csv_file()
+
+        update_friends
+        |> transform_struct_to_list()
+        |> wrap_in_list()
+        |> prepare_list_to_save_csv()
+        |> save_csv_file([:append])
+
+        Shell.info("Amigo atualizado com sucesso!")
+        prompt_message("Pressione ENTER para continuar")
+    end
   end
 end

@@ -10,7 +10,7 @@ defmodule FriendsApp.Db.Csv do
       %Menu{label: _, id: :create} -> create()
       %Menu{label: _, id: :read} -> read()
       %Menu{label: _, id: :update} -> Shell.info(">>> update")
-      %Menu{label: _, id: :delete} -> Shell.info(">>> delete")
+      %Menu{label: _, id: :delete} -> delete()
     end
 
     Choice.start()
@@ -20,7 +20,7 @@ defmodule FriendsApp.Db.Csv do
     collect_data()
     |> transform_struct_to_list()
     |> wrap_in_list()
-    |> prepare_list_to_save_csv
+    |> prepare_list_to_save_csv()
     |> save_csv_file([:append])
   end
 
@@ -28,17 +28,31 @@ defmodule FriendsApp.Db.Csv do
     read_csv_file()
     |> parse_csv_parse_to_list()
     |> csv_list_to_friends_struct_list()
-    |> show_friends()
+    |> show_friends_list()
+  end
+
+  defp delete do
+    clear_terminal()
+
+    prompt_message("Digite o email do amigo a ser excluido: ")
+    |> search_friend_by_email()
+    |> check_friend_found()
+    |> confirm_delete()
+    |> delete_and_save()
   end
 
   defp collect_data do
-    Shell.cmd("clear")
+    clear_terminal()
 
     %Friends{
       name: prompt_message("Digite o nome:"),
       email: prompt_message("Digite o email:"),
       phone: prompt_message("Digite o phone:")
     }
+  end
+
+  defp clear_terminal do
+    Shell.cmd("clear")
   end
 
   defp prompt_message(message) do
@@ -82,7 +96,7 @@ defmodule FriendsApp.Db.Csv do
     |> NimbleCSV.parse_string(skip_headers: false)
   end
 
-  defp show_friends(list) do
+  defp show_friends_list(list) do
     list
     |> Scribe.console(
       data: [
@@ -91,5 +105,77 @@ defmodule FriendsApp.Db.Csv do
         {"Telefone", :phone}
       ]
     )
+  end
+
+  defp search_friend_by_email(email) do
+    read_csv_file()
+    |> parse_csv_parse_to_list()
+    |> csv_list_to_friends_struct_list()
+    |> Enum.find(:not_found, fn list -> list.email == email end)
+  end
+
+  defp check_friend_found(friend) do
+    case friend do
+      :not_found ->
+        clear_terminal()
+        Shell.error("Amigo não encontrado")
+        prompt_message("Pressione ENTER para continuar")
+        Choice.start()
+
+      _ ->
+        friend
+    end
+  end
+
+  defp confirm_delete(friend) do
+    clear_terminal()
+    Shell.info("Encontramos...")
+    show_friend(friend)
+
+    case Shell.yes?("Deseja realmente apagar esse amigo da sua lista?") do
+      true -> friend
+      false -> :error
+    end
+  end
+
+  defp show_friend(friend) do
+    friend
+    |> Scribe.print(
+      data: [
+        {"Nome", :name},
+        {"Email", :email},
+        {"Telefone", :phone}
+      ]
+    )
+  end
+
+  defp delete_and_save(friend) do
+    case friend do
+      :error ->
+        Shell.info("Ok, o amigo NÃO será excluído...")
+        prompt_message("Pressione ENTER para continuar")
+
+      _ ->
+        read_csv_file()
+        |> parse_csv_parse_to_list()
+        |> csv_list_to_friends_struct_list()
+        |> delete_friend_from_struct_list(friend)
+        |> friend_list_to_csv()
+        |> prepare_list_to_save_csv()
+        |> save_csv_file()
+
+        Shell.info("Amigo excluído com sucesso!")
+        prompt_message("Pressione ENTER para continuar")
+    end
+  end
+
+  defp delete_friend_from_struct_list(friends_list, friend) do
+    friends_list
+    |> Enum.reject(fn elem -> elem.email == friend.email end)
+  end
+
+  defp friend_list_to_csv(friends_list) do
+    friends_list
+    |> Enum.map(fn item -> [item.email, item.name, item.phone] end)
   end
 end

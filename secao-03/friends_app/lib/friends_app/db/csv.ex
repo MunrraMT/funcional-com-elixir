@@ -18,25 +18,17 @@ defmodule FriendsApp.Db.Csv do
 
   defp create do
     collect_data()
-    |> transform_on_wrapped_list()
+    |> transform_struct_to_list()
+    |> wrap_in_list()
     |> prepare_list_to_save_csv
     |> save_csv_file([:append])
   end
 
   defp read do
-    Application.fetch_env!(:friends_app, :csv_file_path)
-    |> File.read!()
-    |> NimbleCSV.parse_string(skip_headers: false)
-    |> Enum.map(fn [email, name, phone] ->
-      %Friends{name: name, email: email, phone: phone}
-    end)
-    |> Scribe.console(
-      data: [
-        {"Nome", :name},
-        {"Email", :email},
-        {"Telefone", :phone}
-      ]
-    )
+    read_csv_file()
+    |> parse_csv_parse_to_list()
+    |> csv_list_to_friends_struct_list()
+    |> show_friends()
   end
 
   defp collect_data do
@@ -55,11 +47,10 @@ defmodule FriendsApp.Db.Csv do
     |> String.trim()
   end
 
-  defp transform_on_wrapped_list(struct) do
+  defp transform_struct_to_list(struct) do
     struct
     |> Map.from_struct()
     |> Map.values()
-    |> wrap_in_list()
   end
 
   defp wrap_in_list(list) do
@@ -74,5 +65,31 @@ defmodule FriendsApp.Db.Csv do
   defp save_csv_file(data, mode \\ []) do
     Application.fetch_env!(:friends_app, :csv_file_path)
     |> File.write!(data, mode)
+  end
+
+  defp csv_list_to_friends_struct_list(list) do
+    list
+    |> Enum.map(fn [email, name, phone] -> %Friends{name: name, email: email, phone: phone} end)
+  end
+
+  defp read_csv_file do
+    Application.fetch_env!(:friends_app, :csv_file_path)
+    |> File.read!()
+  end
+
+  defp parse_csv_parse_to_list(csv) do
+    csv
+    |> NimbleCSV.parse_string(skip_headers: false)
+  end
+
+  defp show_friends(list) do
+    list
+    |> Scribe.console(
+      data: [
+        {"Nome", :name},
+        {"Email", :email},
+        {"Telefone", :phone}
+      ]
+    )
   end
 end
